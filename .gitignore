@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Environments
+.venv/
+env/
+venv/
+
+# Data
+data/raw/
+data/processed/
+
+# Runs and outputs
+runs/
+
+# Model weights
+*.pt
+*.pth
+*.bin
+*.h5
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Conda
+*.conda
+conda-meta/

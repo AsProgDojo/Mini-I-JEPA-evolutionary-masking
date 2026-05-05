@@ -8,7 +8,7 @@ def visualize_masks(image, target_indices, context_indices, title="Mask Vizualiz
     """
     Visualize target and context masks overlaid on an image.
 
-    image: numpy array of shape (3, 64, 64) or (64, 64, 3), values in [0, 1]
+    image: numpy array of shape (3, 64, 64) (CHW dimension order which is used by PyTorch) or (64, 64, 3) (HWC dimension order which is used by Matplotlib), values in [0, 1]
     target_indices: set of target patch indices (red)
     context_indices: set of context patch indices (green)
     save_path: full path to save PNG, if None just shows

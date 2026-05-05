@@ -25,40 +25,36 @@ def sample_one_block(rng, shape, area_min, area_max, aspect_min, aspect_max):
     else:
         return SHAPE_SAMPLERS[shape](rng, area_min, area_max, aspect_min, aspect_max)
     
-def sample_target_blocks(rng, shape, num_blocks,area_min, area_max, aspect_min, aspect_max, max_attempts=20):
+def sample_target_blocks(rng, shape, num_blocks, area_min, area_max, aspect_min, aspect_max):
     """
-    Sample num_blocks non-overlapping target blocks.
-    Resamples a block if it overlaps with already chosen blocks.
+    Sample num_blocks target blocks, allowing overlap between them.
     Returns the union of all target patch indices.
     """
     all_target_indices = set()
-
     for _ in range(num_blocks):
-        for attempt in range(max_attempts):
-            block = sample_one_block(rng, shape, area_min, area_max, aspect_min, aspect_max)
-
-            if block.isdisjoint(all_target_indices):
-                all_target_indices.update(block)
-                break
-        else:
-            all_target_indices.update(block)
-        
+        block = sample_one_block(rng, shape, area_min, area_max, aspect_min, aspect_max)
+        all_target_indices.update(block)
     return all_target_indices
 
 def sample_context(rng, context_area, target_indices):
     """
-    Sample a context region of size context_area * NUM_PATCHES from the full grid.
+    Sample a context region as a single rectangular block of size 
+    context_area * NUM_PATCHES with aspect ratio near 1.0.
     Then remove any patches that overlap with target indices.
-    Returns context patch indices.
     """
-    context_size = int(round(context_area * NUM_PATCHES))
-
-    all_patches = list(range(NUM_PATCHES))
-    rng.shuffle(all_patches)
-    context_indices = set(all_patches[:context_size])
-
+    from masking.shapes import sample_rectangle
+    
+    context_indices = sample_rectangle(
+    rng,
+    area_min=context_area,
+    area_max=context_area,
+    aspect_min=0.75,
+    aspect_max=1.5,
+    )
+    
     # Remove target-overlapping patches from context
     context_indices -= target_indices
+    
     return context_indices
 
 def sample_masks(chromosome, rng):
@@ -68,8 +64,8 @@ def sample_masks(chromosome, rng):
         - context_indices: set of patch indices the encoder sees
         - all_indices: all of 256 patches (for target encoder)
     """
-    shape = chromosome.shape
-    num_blocks = chromosome.num_blocks
+    shape = chromosome.mask_shape
+    num_blocks = chromosome.num_target_blocks
     area_min = chromosome.area_min
     area_max = chromosome.area_max
     aspect_min = chromosome.aspect_min

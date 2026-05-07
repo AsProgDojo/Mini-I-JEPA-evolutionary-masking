@@ -62,3 +62,20 @@ class MultiHeadAttention(nn.Module):
         # Final projection
         out = self.out_proj(out)
         return out
+    
+class MLP(nn.Module):
+    """
+    Two-layer MLP with GELU activation. Expands by mlp_ratio then projects back.
+    """
+    def __init__(self, embed_dim, mlp_ratio=4):
+        super().__init__()
+        hidden_dim = embed_dim * mlp_ratio
+        self.fc1 = nn.Linear(embed_dim, hidden_dim)     # 'fc' stand for fully connected, as in fully connected layer. It is another name for linear layer (nn.Linear)
+        self.act = nn.GELU()                            # 'act' stands for activation function
+        self.fc2 = nn.Linear(hidden_dim, embed_dim)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.act(x)
+        x = self.fc2(x)
+        return x

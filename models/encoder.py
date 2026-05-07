@@ -97,3 +97,39 @@ class TransformerBlock(nn.Module):
         x = x + self.mlp(self.norm2(x))
         return x
 
+class Encoder(nn.Module):
+    """
+    ViT encoder. Can process either the full image (target encoder) or a subset of patches
+    """
+    def __init__(self, image_size=64, patch_size=4, in_channels=3, embed_dim=192, depth=4, num_heads=4, mlp_ratio=4):
+        super().__init__()
+        self.patch_embed = PatchEmbed(image_size, patch_size, in_channels, embed_dim)
+        self.num_patches = self.patch_embed.num_patches
+        self_embed_dim = embed_dim
+
+        # Learnable positional embedding, one per patch position
+        self.pos_embed = nn.Parameter(torch.zeros(1, self.num_patches, embed_dim))
+        nn.init.trunc_normal_(self.pos_embed, std=0.02)
+
+        # Stack of transformer blocks
+        self.blocks = nn.ModuleList([
+            TransformerBlock(embed_dim, num_heads, mlp_ratio)
+            for _ in range(depth)
+        ])
+        self.norm = nn.LayerNorm(embed_dim)
+
+    def forward(self, images, patch_indices=None):
+        # images: (batch, 3, 64, 64)
+        x = self.patch_embed(images)                                        # (batch, 256, embed_dim)
+        x = x + self.pos_embed                                              # add positional embedding to all patches first
+
+        # If subset specified, gather only those patches
+        if patch_indices is not None:
+            # patch_indices: (num_kept,) tensor of patch indices
+            x = x[:, patch_indices, :]                                      # (batch, num_kept, embed_dim)
+        
+        # Pass through transformer blocks
+        for block in self.blocks:
+            x = block(x)
+        x = self.norm(x)
+        return x

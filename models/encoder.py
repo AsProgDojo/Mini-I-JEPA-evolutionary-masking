@@ -79,3 +79,21 @@ class MLP(nn.Module):
         x = self.act(x)
         x = self.fc2(x)
         return x
+
+
+class TransformerBlock(nn.Module):
+    """
+    Pre-norm transformer blcok: LayerNorm before attention/MLP, with residual connections.
+    """
+    def __init__(self, embed_dim, num_heads, mlp_ratio=4):
+        super().__init__()
+        self.norm1 = nn.LayerNorm(embed_dim)
+        self.attn = MultiHeadAttention(embed_dim, num_heads)
+        self.norm2 = nn.LayerNorm(embed_dim)
+        self.mlp = MLP(embed_dim, mlp_ratio)
+
+    def forward(self, x):
+        x = x + self.attn(self.norm1(x))
+        x = x + self.mlp(self.norm2(x))
+        return x
+
